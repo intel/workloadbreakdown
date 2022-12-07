@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Intel® Workload Breakdown</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1, width=device-width" />
+    <script
+      src="https://unpkg.com/react@latest/umd/react.development.js"
+      crossorigin="anonymous"
+    ></script>
+    <script src="https://unpkg.com/react-dom@latest/umd/react-dom.development.js"></script>
+    <script
+      src="https://unpkg.com/@mui/material@latest/umd/material-ui.development.js"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://unpkg.com/babel-standalone@latest/babel.min.js"
+      crossorigin="anonymous"
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+    <!-- Fonts to support Material Design -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"
+    />
+    <!-- Icons to support Material Design -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="text/babel">
+      // Copyright (C) 2022 Intel Corporation
+      // SPDX-License-Identifier: MIT
+      const {
+        colors,
+        CssBaseline,
+        ThemeProvider,
+        Container,
+        createTheme,
+        Typography,
+        Grid,
+        Box,
+        SpeedDial,
+        SpeedDialIcon,
+        SpeedDialAction,
+        Icon,
+      } = MaterialUI;
+
+      // Create a theme instance.
+      const theme = createTheme({
+        typography: {
+          fontSize: 14,
+          h2: {
+            fontSize: "2.5rem",
+          },
+          fontFamily: [
+            "-apple-system",
+            "BlinkMacSystemFont",
+            '"Segoe UI"',
+            "Roboto",
+            '"Helvetica Neue"',
+            "Arial",
+            "sans-serif",
+            '"Apple Color Emoji"',
+            '"Segoe UI Emoji"',
+            '"Segoe UI Symbol"',
+          ].join(","),
+        },
+        palette: {
+          primary: {
+            main: "#556cd6",
+          },
+          secondary: {
+            main: "#19857b",
+          },
+          error: {
+            main: colors.red.A400,
+          },
+        },
+      });
+
+      const actions = [
+        { icon: <Icon>mobiledata_off</Icon>, name: "Network Data" },
+        { icon: <Icon>schedule</Icon>, name: "Network Time" },
+        { icon: <Icon>memory</Icon>, name: "CPU Utilization" },
+        { icon: <Icon>inventory_2</Icon>, name: "Memory Utilization" },
+      ];
+
+      function ReactECharts({ option, style, settings, loading, theme }) {
+        const chartRef = React.useRef("null");
+
+        React.useEffect(() => {
+          // Initialize chart
+          let chart;
+          if (chartRef.current !== null) {
+            chart = echarts.init(chartRef.current, theme);
+          }
+
+          // Add chart resize listener
+          // ResizeObserver is leading to a bit janky UX
+          function resizeChart() {
+            chart.resize();
+          }
+          window.addEventListener("resize", resizeChart);
+
+          // Return cleanup function
+          return () => {
+            chart.dispose();
+            window.removeEventListener("resize", resizeChart);
+          };
+        }, [theme]);
+
+        React.useEffect(() => {
+          // Update chart
+          if (chartRef.current !== null) {
+            const chart = echarts.getInstanceByDom(chartRef.current);
+            chart.setOption(option, settings);
+          }
+        }, [option, settings, theme]); // Whenever theme changes we need to add option and setting due to it being deleted in cleanup function
+
+        React.useEffect(() => {
+          // Update chart
+          if (chartRef.current !== null) {
+            const chart = echarts.getInstanceByDom(chartRef.current);
+            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+            loading === true ? chart.showLoading() : chart.hideLoading();
+          }
+        }, [loading, theme]);
+
+        return (
+          <div
+            ref={chartRef}
+            style={{ width: "100%", height: "100%", ...style }}
+          />
+        );
+      }
+
+      function App() {
+        const [nodes, setNodes] = React.useState(BFNODES);
+
+        const changeViz = (e) => {
+          let updatedNodes = [...nodes];
+          if (e === "Network Data") {
+            for (let node of updatedNodes) {
+              node.symbolSize = node.normData;
+              node.name = node.dataName;
+            }
+          } else if (e === "Network Time") {
+            for (let node of updatedNodes) {
+              node.symbolSize = node.normLat;
+              node.name = node.latName;
+            }
+          } else if (e === "CPU Utilization") {
+            for (let node of updatedNodes) {
+              node.symbolSize = node.normCPU;
+              node.name = node.cpuName;
+            }
+          } else if (e === "Memory Utilization") {
+            for (let node of updatedNodes) {
+              node.symbolSize = node.normMEM;
+              node.name = node.memName;
+            }
+          }
+          setNodes(updatedNodes);
+        };
+
+        let BFoption = {
+          legend: [{}],
+          series: [
+            {
+              type: "graph",
+              layout: "force",
+              force: {
+                repulsion: 100,
+              },
+              label: {
+                position: "right",
+              },
+              roam: true,
+              nodes: nodes,
+              edges: BFEDGES,
+              categories: BFCATGS,
+            },
+          ],
+        };
+
+        return (
+          <Grid container style={{ height: "100vh", overflow: "auto" }}>
+            <ReactECharts option={BFoption} />
+            <Box
+              sx={{
+                height: "100vh",
+                transform: "translateZ(0px)",
+                flexGrow: 1,
+              }}
+            >
+              <SpeedDial
+                ariaLabel="SpeedDial basic example"
+                sx={{ position: "absolute", bottom: 16, right: 16 }}
+                icon={<SpeedDialIcon />}
+              >
+                {actions.map((action) => (
+                  <SpeedDialAction
+                    key={action.name}
+                    icon={action.icon}
+                    tooltipTitle={action.name}
+                    onClick={() => {
+                      changeViz(action.name);
+                    }}
+                  />
+                ))}
+              </SpeedDial>
+            </Box>
+          </Grid>
+        );
+      }
+
+      const root = ReactDOM.createRoot(document.getElementById("root"));
+      root.render(
+        <ThemeProvider theme={theme}>
+          {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
+          <CssBaseline />
+          <App />
+        </ThemeProvider>
+      );
+    </script>
+  </body>
+</html>

@@ -16,7 +16,8 @@ wget https://github.com/intel/workloadbreakdown/releases/latest/download/control
 sudo chmod +x controller
 ./controller
 ```
-![example](https://github.com/intel-innersource/applications.analyzers.cloudcompute.breakfast/assets/86739774/94a4f0d0-fb5b-4692-a8aa-cb9c43e5ed52)
+![example](https://user-images.githubusercontent.com/86739774/206239965-7db96c92-6515-44ae-b063-a6970c762ae9.gif)
+
 
 ## How to build
 ### Controller

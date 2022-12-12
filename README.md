@@ -10,11 +10,15 @@ Drop-in analysis of distributed workloads. Generates a map of processes which co
 ```
 docker run -d --pid=host --userns=host --privileged intel/workload-breakdown-collector:latest <controller-node-ip>
 ```
-2. Run controller
+2. Run controller (runs for 15 seconds)
 ```
 wget https://github.com/intel/workloadbreakdown/releases/latest/download/controller -O controller
 sudo chmod +x controller
 ./controller
+```
+to run without prompt add the following flag
+```
+./controller noprompt
 ```
 ![example](https://user-images.githubusercontent.com/86739774/206239965-7db96c92-6515-44ae-b063-a6970c762ae9.gif)
 

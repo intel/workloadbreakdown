@@ -1,5 +1,5 @@
 # Intel® Workload Breakdown
-Drop-in analysis of distributed workloads. Generates a map of processes which communicate over TCP. Gets the following metrics per visualized process
+Drop-in eBPF analysis of distributed workloads. Generates a map of processes which communicate over TCP. Gets the following metrics per visualized process
 - Network time
 - Network data (kb sent and received)
 -	CPU utilization
